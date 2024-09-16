@@ -18,6 +18,11 @@ if ! command -v gcovr >/dev/null; then
 fi
 
 echo "==> Running tests"
-(cd "build/debug" && cmake --build . >/dev/null && ctest)
+(
+  cd build/debug &&
+    cmake --build . >/dev/null &&
+    find . -name "*.gcda" -print0 | xargs -0 rm &&
+    ctest --output-on-failure
+)
 
 gcovr -r cpplm build/debug "$@" --config "$PWD/gcovr.cfg"
