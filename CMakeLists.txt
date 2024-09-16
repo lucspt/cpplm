@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.20 FATAL_ERROR)
 
 if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
 	message(FATAL_ERROR "In-source build is not supported")
@@ -20,5 +20,15 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
+find_package(Torch REQUIRED)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
+
 # uncomment for testing
-# enable_testing()
+enable_testing()
+include(GoogleTest)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/utils.cmake)
+
+create_tests_from_sources(
+	SOURCES tests/modules.test.cpp
+	LIBRARIES torch
+)
