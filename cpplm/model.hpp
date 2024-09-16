@@ -1,3 +1,6 @@
+#ifndef CPPLM_MODEL_HPP
+#define CPPLM_MODEL_HPP
+
 #include <torch/torch.h>
 #include <config.hpp>
 class Model : torch::nn::Module {
@@ -10,3 +13,5 @@ public:
   torch::Tensor compute_loss(const torch::Tensor& logits, const torch::Tensor& target);
   torch::Tensor forward(const torch::Tensor& x);
 };
+
+#endif

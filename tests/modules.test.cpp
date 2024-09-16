@@ -54,3 +54,17 @@ TEST_F(RotaryPositionalEmbeddingsTest, FirstRotationHasNoEffect) {
     ASSERT_TRUE(torch::allclose(inps.index({i, 0}), out.index({i, 0})));
   };
 }
+
+class CausalSelfAttentionTest : public testing::Test {
+protected:
+  torch::Tensor inps;
+  CausalSelfAttention attn_layer;
+
+  CausalSelfAttentionTest()
+    : inps{torch::randn({config.bsz, config.context_len, config.dim})},
+      attn_layer{CausalSelfAttention{ModelConfig{}}} {};
+};
+
+TEST_F(CausalSelfAttentionTest, ShapeIsNotModified) {
+  EXPECT_EQ(attn_layer.forward(inps).sizes(), inps.sizes());
+}

@@ -1,4 +1,8 @@
+#ifndef CPPLM_MODULES_HPP
+#define CPPLM_MODULES_HPP
 #include <torch/torch.h>
+#include <config.hpp>
+#include <string>
 
 /**
  * Implements root mean square normalization. 
@@ -6,12 +10,12 @@
  * See here: https://arxiv.org/abs/1910.07467
  */
 class RMSNorm : torch::nn::Module {
-  double eps;
+  const double eps;
   torch::Tensor weight;
 
 public:
   /** Construct an RMSNorm module. */
-  RMSNorm(const int& dim, const double eps = 1e-6);
+  RMSNorm(const int& dim, const double& eps = 1e-6);
 
   /** Perform root mean square normalization on `x` */
   torch::Tensor _norm(const torch::Tensor& x);
@@ -46,3 +50,27 @@ public:
   /** Apply the rotary positional embeddings on `x` */
   torch::Tensor forward(const torch::Tensor& x);
 };
+
+class CausalSelfAttention : torch::nn::Module {
+  ModelConfig config;
+  torch::nn::Linear wq;
+  torch::nn::Linear wk;
+  torch::nn::Linear wv;
+  RotaryPositionalEmbeddings rope;
+  torch::nn::Linear wo;
+  torch::nn::Dropout wo_dropout;
+
+public:
+  /** construct a `CausalSelfAttention` module
+   * 
+   * @param config The `ModelConfig` POD. 
+   */
+  CausalSelfAttention(const ModelConfig& config);
+
+  /** Helper method for registering a linear layer when constructing */
+  torch::nn::Linear register_linear(const std::string& name);
+
+  /** Compute and return the attention scores given `x` */
+  torch::Tensor forward(const torch::Tensor& x);
+};
+#endif
