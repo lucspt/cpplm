@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+
+set -e
+
+cd "$(dirname "$0")/../../"
+
+sh ./scripts/test
+
+sh ./scripts/format
+
+files=$(git diff --name-only --cached --diff-filter=ACMR)
+
+if ! [ -z "$files" ]; then
+  git add -- $files
+fi

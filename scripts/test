@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+cd "$(dirname "$0")/../"
+
+RED="\033[0;31m"
+
+if [[ ! -e "build/debug" ]]; then
+  printf "${RED} You have yet to generate a debug build for the project. "
+  printf "${RED} You must do so before commiting\n"
+  echo "(e.g. run 'cd build/debug && cmake ../../ -DCMAKE_BUILD_TYPE=Debug' in project root)"
+  exit 1
+fi
+
+if ! command -v gcovr >/dev/null; then
+  printf "${RED} You must install gcovr to run tests. "
+  printf "See here for more: https://gcovr.com/en/stable/installation.html\n"
+  exit 1
+fi
+
+echo "==> Running tests"
+(cd "build/debug" && cmake --build . >/dev/null && ctest)
+
+gcovr -r cpplm build/debug "$@" --config "$PWD/gcovr.cfg"
