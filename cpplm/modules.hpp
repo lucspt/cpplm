@@ -73,4 +73,39 @@ public:
   /** Compute and return the attention scores given `x` */
   torch::Tensor forward(const torch::Tensor& x);
 };
+
+class FeedForward : torch::nn::Module {
+  torch::nn::Linear fc1;
+  torch::nn::Linear fc2;
+  torch::nn::GELU gelu;
+
+public:
+  /** Initialize a `FeedForward` multi-layer perceptron.
+   * 
+   * Implements a multi-layer perceptron with `torch::nn::GELU` nonlinearity.
+   * 
+   * @param dim The input dimension
+   */
+  FeedForward(const int& dim);
+
+  /** mlp forward pass. */
+  torch::Tensor forward(const torch::Tensor& x);
+};
+
+/** A transformer decoder layer module */
+class DecoderLayer : torch::nn::Module {
+  CausalSelfAttention attn;
+  RMSNorm attn_norm;
+  FeedForward mlp;
+  RMSNorm mlp_norm;
+
+public:
+  /** Initialize a transformer `DecoderLayer`.
+   * 
+   * @param config The `ModelConfig` object to initialize modules with.
+   */
+  DecoderLayer(const ModelConfig& config);
+  torch::Tensor forward(const torch::Tensor& x);
+};
+
 #endif

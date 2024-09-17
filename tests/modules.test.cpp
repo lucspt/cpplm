@@ -4,6 +4,7 @@
 #include <iostream>
 #include <config.hpp>
 
+const ModelConfig model_config{};
 struct Config : public ModelConfig {
   int bsz{4};
 } config;
@@ -55,6 +56,9 @@ TEST_F(RotaryPositionalEmbeddingsTest, FirstRotationHasNoEffect) {
   };
 }
 
+// #################################################################
+// CausalSelfAttention
+
 class CausalSelfAttentionTest : public testing::Test {
 protected:
   torch::Tensor inps;
@@ -67,4 +71,21 @@ protected:
 
 TEST_F(CausalSelfAttentionTest, ShapeIsNotModified) {
   EXPECT_EQ(attn_layer.forward(inps).sizes(), inps.sizes());
+}
+
+// #################################################################
+// DecoderLayer
+
+class DecoderLayerTest : public testing::Test {
+protected:
+  DecoderLayer d_layer;
+  torch::Tensor inps;
+
+  DecoderLayerTest()
+    : d_layer{DecoderLayer{model_config}},
+      inps{torch::rand({config.bsz, config.context_len, config.dim})} {}
+};
+
+TEST_F(DecoderLayerTest, ShapeIsNotModified) {
+  EXPECT_EQ(d_layer.forward(inps).sizes(), inps.sizes());
 }

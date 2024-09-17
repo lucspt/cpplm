@@ -1,10 +1,9 @@
 #include <torch/torch.h>
 #include <modules.hpp>
 #include <string>
-#include <iostream>
 
 RMSNorm::RMSNorm(const int& dim, const double& eps) : eps(eps) {
-  weight = register_parameter("weight", torch::ones(dim));
+  weight = register_parameter("weight", torch::ones({dim}));
 }
 
 torch::Tensor RMSNorm::_norm(const torch::Tensor& x) {
@@ -58,7 +57,6 @@ torch::Tensor RotaryPositionalEmbeddings::forward(const torch::Tensor& x) {
   rope_cache = rope_cache.reshape({-1, xshaped.size(1), 1, xshaped.size(3), 2});
 
   // apply rotations
-  std::cout << "HERERERE ROPE";
   torch::Tensor out{torch::stack(
     {xshaped.index({"...", 0}) * rope_cache.index({"...", 0})
        - xshaped.index({"...", 1}) * rope_cache.index({"...", 1}),
@@ -66,8 +64,6 @@ torch::Tensor RotaryPositionalEmbeddings::forward(const torch::Tensor& x) {
        + xshaped.index({"...", 0}) * rope_cache.index({"...", 1})},
     -1
   )};
-
-  std::cout << "HERER 222222 ROPE" << '\n';
 
   out = out.flatten(3).type_as(x);
   return out;
@@ -105,7 +101,6 @@ torch::Tensor CausalSelfAttention::forward(const torch::Tensor& x) {
   // we can move heads to batch dim now for v, not using rope
   xv = xv.reshape({b, t, nhead, c / nhead}).transpose(1, 2);
 
-  std::cout << xq.sizes() << ' ' << xk.sizes() << '\n';
   xq = rope.forward(xq).transpose(1, 2);
   xk = rope.forward(xk).transpose(1, 2);
 
@@ -117,4 +112,34 @@ torch::Tensor CausalSelfAttention::forward(const torch::Tensor& x) {
   y = y.transpose(1, 2).contiguous().reshape({b, t, c});
 
   return wo_dropout->forward(wo->forward(y));
+}
+
+FeedForward::FeedForward(const int& dim)
+  : fc1{register_module(
+      "fc1", torch::nn::Linear(torch::nn::LinearOptions(dim, 4 * dim).bias(false))
+    )},
+    fc2{register_module(
+      "fc2", torch::nn::Linear(torch::nn::LinearOptions(4 * dim, dim).bias(false))
+    )},
+    gelu{register_module("gelu", torch::nn::GELU{})} {
+}
+
+torch::Tensor FeedForward::forward(const torch::Tensor& x) {
+  torch::Tensor xout{fc1->forward(x)};
+  xout = torch::gelu(xout);
+  xout = fc2->forward(xout);
+  return xout;
+}
+
+DecoderLayer::DecoderLayer(const ModelConfig& config)
+  : attn{CausalSelfAttention{config}},
+    attn_norm{RMSNorm{config.dim, config.rmsnorm_eps}},
+    mlp{FeedForward{config.dim}},
+    mlp_norm{RMSNorm{config.dim, config.rmsnorm_eps}} {
+}
+
+torch::Tensor DecoderLayer::forward(const torch::Tensor& x) {
+  torch::Tensor xout{x + attn.forward(attn_norm.forward(x))};
+  xout = xout + mlp.forward(mlp_norm.forward(xout));
+  return xout;
 }
