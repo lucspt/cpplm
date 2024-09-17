@@ -9,38 +9,40 @@
  * 
  * See here: https://arxiv.org/abs/1910.07467
  */
-class RMSNorm : torch::nn::Module {
+class RMSNormImpl : public torch::nn::Module {
   const double eps;
   torch::Tensor weight;
 
 public:
-  /** Construct an RMSNorm module. */
-  RMSNorm(const int& dim, const double& eps = 1e-6);
+  /** Construct an RMSNormImpl module. */
+  RMSNormImpl(const int& dim, const double& eps = 1e-6);
 
   /** Perform root mean square normalization on `x` */
   torch::Tensor _norm(const torch::Tensor& x);
   torch::Tensor forward(const torch::Tensor& x);
 };
 
+TORCH_MODULE(RMSNorm);
+
 /**
  * Implements rotary positional embeddings.
  * 
  * See here: https://arxiv.org/abs/2104.09864
  */
-class RotaryPositionalEmbeddings : torch::nn::Module {
+class RotaryPositionalEmbeddingsImpl : public torch::nn::Module {
   int dim;
   int max_seq_len;
   double base;
   torch::Tensor cache;
 
 public:
-  /** Initialize a RotaryPositionalEmbeddings module. 
+  /** Initialize a RotaryPositionalEmbeddingsImpl module. 
    * 
    * @param dim The dimension of the input embeddings.
    * @param max_seq_len The maximum expected sequence length to compute angles for.
    * @param base The base used when computing theta.
   */
-  RotaryPositionalEmbeddings(
+  RotaryPositionalEmbeddingsImpl(
     const int& dim, const int& max_seq_len, const double& base = 10000.0
   );
 
@@ -51,7 +53,9 @@ public:
   torch::Tensor forward(const torch::Tensor& x);
 };
 
-class CausalSelfAttention : torch::nn::Module {
+TORCH_MODULE(RotaryPositionalEmbeddings);
+
+class CausalSelfAttentionImpl : public torch::nn::Module {
   ModelConfig config;
   torch::nn::Linear wq;
   torch::nn::Linear wk;
@@ -61,11 +65,11 @@ class CausalSelfAttention : torch::nn::Module {
   torch::nn::Dropout wo_dropout;
 
 public:
-  /** construct a `CausalSelfAttention` module
+  /** construct a `CausalSelfAttentionImpl` module
    * 
    * @param config The `ModelConfig` POD. 
    */
-  CausalSelfAttention(const ModelConfig& config);
+  CausalSelfAttentionImpl(const ModelConfig& config);
 
   /** Helper method for registering a linear layer when constructing */
   torch::nn::Linear register_linear(const std::string& name);
@@ -74,26 +78,30 @@ public:
   torch::Tensor forward(const torch::Tensor& x);
 };
 
-class FeedForward : torch::nn::Module {
+TORCH_MODULE(CausalSelfAttention);
+
+class FeedForwardImpl : public torch::nn::Module {
   torch::nn::Linear fc1;
   torch::nn::Linear fc2;
   torch::nn::GELU gelu;
 
 public:
-  /** Initialize a `FeedForward` multi-layer perceptron.
+  /** Initialize a `FeedForwardImpl` multi-layer perceptron.
    * 
    * Implements a multi-layer perceptron with `torch::nn::GELU` nonlinearity.
    * 
    * @param dim The input dimension
    */
-  FeedForward(const int& dim);
+  FeedForwardImpl(const int& dim);
 
   /** mlp forward pass. */
   torch::Tensor forward(const torch::Tensor& x);
 };
 
+TORCH_MODULE(FeedForward);
+
 /** A transformer decoder layer module */
-class DecoderLayer : torch::nn::Module {
+class DecoderLayerImpl : public torch::nn::Module {
   CausalSelfAttention attn;
   RMSNorm attn_norm;
   FeedForward mlp;
@@ -104,8 +112,10 @@ public:
    * 
    * @param config The `ModelConfig` object to initialize modules with.
    */
-  DecoderLayer(const ModelConfig& config);
+  DecoderLayerImpl(const ModelConfig& config);
   torch::Tensor forward(const torch::Tensor& x);
 };
+
+TORCH_MODULE(DecoderLayer);
 
 #endif

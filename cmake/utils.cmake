@@ -49,21 +49,19 @@ endfunction()
 # LIBRARIES should be the list of libraries to link with the test. 
 # `gtest`, `gmock` and `gtest_main` are all  included automatically. 
 # This list this can be empty.
-function(create_tests_from_sources)
+function(create_test_from_file)
   cmake_parse_arguments(
     Args
     ""
-    ""
+    "FILE"
     "SOURCES;LIBRARIES"
     ${ARGN}
   )
-  foreach(test_src ${Args_SOURCES})
-    cmake_path(GET test_src STEM test_filename)
-    set(test_name "test_${test_filename}")
-    add_executable(${test_name} "${test_src}")
-    add_test(NAME ${test_name} COMMAND $<TARGET_FILE:${test_name}>)
-    target_include_directories(${test_name} PRIVATE ${PROJECT_NAME})
-    target_link_libraries(${test_name} ${Args_LIBRARIES} gtest gmock gtest_main)
-    target_compile_coverage(${test_name})
-  endforeach()
+  cmake_path(GET Args_FILE STEM test_filename)
+  set(test_name "test_${test_filename}")
+  add_executable(${test_name} "${Args_FILE}" ${Args_SOURCES})
+  add_test(NAME ${test_name} COMMAND $<TARGET_FILE:${test_name}>)
+  target_include_directories(${test_name} PRIVATE ${PROJECT_NAME})
+  target_link_libraries(${test_name} ${Args_LIBRARIES} gtest gmock gtest_main)
+  target_compile_coverage(${test_name})
 endfunction()

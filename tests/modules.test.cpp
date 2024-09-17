@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include <torch/torch.h>
-#include <modules.cpp>
+#include <modules.hpp>
 #include <iostream>
 #include <config.hpp>
 
@@ -10,14 +10,14 @@ struct Config : public ModelConfig {
 } config;
 
 // #################################################################
-// RMSNorm
-class RMSNormTest : public testing::Test {
+// RMSNormImpl
+class RMSNormImplTest : public testing::Test {
 protected:
-  RMSNorm norm_layer;
-  RMSNormTest() : norm_layer{RMSNorm(config.dim)} {};
+  RMSNormImpl norm_layer;
+  RMSNormImplTest() : norm_layer{RMSNormImpl(config.dim)} {};
 };
 
-TEST_F(RMSNormTest, ShapeIsNotModified) {
+TEST_F(RMSNormImplTest, ShapeIsNotModified) {
   torch::Tensor inps{torch::rand({config.bsz, config.context_len, config.dim})};
   EXPECT_EQ(inps.sizes(), norm_layer.forward(inps).sizes());
 }
@@ -25,17 +25,17 @@ TEST_F(RMSNormTest, ShapeIsNotModified) {
 // #################################################################
 // RotaryPositionalEmbedding
 
-TEST(RotaryPositionalEmbeddings, RaisesIfDimNotEven) {
+TEST(RotaryPositionalEmbeddingsImpl, RaisesIfDimNotEven) {
   EXPECT_THROW(
-    RotaryPositionalEmbeddings(11, config.context_len * 2), std::invalid_argument
+    RotaryPositionalEmbeddingsImpl(11, config.context_len * 2), std::invalid_argument
   );
 }
-class RotaryPositionalEmbeddingsTest : public testing::Test {
+class RotaryPositionalEmbeddingsImplTest : public testing::Test {
 protected:
   const torch::Tensor inps;
-  RotaryPositionalEmbeddings rope_layer;
-  RotaryPositionalEmbeddingsTest()
-    : rope_layer{RotaryPositionalEmbeddings(
+  RotaryPositionalEmbeddingsImpl rope_layer;
+  RotaryPositionalEmbeddingsImplTest()
+    : rope_layer{RotaryPositionalEmbeddingsImpl(
         config.dim / config.n_heads,  // expects head dim, not dim
         config.context_len * 2
       )},
@@ -44,11 +44,11 @@ protected:
       )} {};
 };
 
-TEST_F(RotaryPositionalEmbeddingsTest, ShapeIsNotModified) {
+TEST_F(RotaryPositionalEmbeddingsImplTest, ShapeIsNotModified) {
   EXPECT_EQ(rope_layer.forward(inps).sizes(), inps.sizes());
 };
 
-TEST_F(RotaryPositionalEmbeddingsTest, FirstRotationHasNoEffect) {
+TEST_F(RotaryPositionalEmbeddingsImplTest, FirstRotationHasNoEffect) {
   torch::Tensor out{rope_layer.forward(inps)};
   auto nbatch{inps.size(0)};
   for (int i{0}; i < nbatch; ++i) {
@@ -57,35 +57,35 @@ TEST_F(RotaryPositionalEmbeddingsTest, FirstRotationHasNoEffect) {
 }
 
 // #################################################################
-// CausalSelfAttention
+// CausalSelfAttentionImpl
 
-class CausalSelfAttentionTest : public testing::Test {
+class CausalSelfAttentionImplTest : public testing::Test {
 protected:
   torch::Tensor inps;
-  CausalSelfAttention attn_layer;
+  CausalSelfAttentionImpl attn_layer;
 
-  CausalSelfAttentionTest()
+  CausalSelfAttentionImplTest()
     : inps{torch::randn({config.bsz, config.context_len, config.dim})},
-      attn_layer{CausalSelfAttention{ModelConfig{}}} {};
+      attn_layer{CausalSelfAttentionImpl{ModelConfig{}}} {};
 };
 
-TEST_F(CausalSelfAttentionTest, ShapeIsNotModified) {
+TEST_F(CausalSelfAttentionImplTest, ShapeIsNotModified) {
   EXPECT_EQ(attn_layer.forward(inps).sizes(), inps.sizes());
 }
 
 // #################################################################
 // DecoderLayer
 
-class DecoderLayerTest : public testing::Test {
+class DecoderLayerImplTest : public testing::Test {
 protected:
-  DecoderLayer d_layer;
+  DecoderLayerImpl d_layer;
   torch::Tensor inps;
 
-  DecoderLayerTest()
-    : d_layer{DecoderLayer{model_config}},
+  DecoderLayerImplTest()
+    : d_layer{DecoderLayerImpl{model_config}},
       inps{torch::rand({config.bsz, config.context_len, config.dim})} {}
 };
 
-TEST_F(DecoderLayerTest, ShapeIsNotModified) {
+TEST_F(DecoderLayerImplTest, ShapeIsNotModified) {
   EXPECT_EQ(d_layer.forward(inps).sizes(), inps.sizes());
 }

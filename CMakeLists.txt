@@ -28,7 +28,8 @@ enable_testing()
 include(GoogleTest)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/utils.cmake)
 
-create_tests_from_sources(
-	SOURCES tests/modules.test.cpp
+create_test_from_file(
+	FILE tests/modules.test.cpp
+	SOURCES cpplm/modules.cpp cpplm/modules.hpp
 	LIBRARIES torch
 )
