@@ -1,4 +1,7 @@
-#include <torch/torch.h>
+#include <ATen/core/ATen_fwd.h>
+#include <ATen/core/TensorBody.h>
+#include <ATen/ops/rsqrt.h>
+#include <torch/nn/options/linear.h>
 #include <modules.hpp>
 #include <string>
 
@@ -91,8 +94,9 @@ torch::Tensor CausalSelfAttentionImpl::forward(const torch::Tensor& x) {
   torch::Tensor xv{wv->forward(x)};
 
   torch::IntArrayRef in_shape{x.sizes()};
-  auto b{in_shape[0]}, t{in_shape[1]}, c{in_shape[2]};
+  const auto &b{in_shape[0]}, t{in_shape[1]}, c{in_shape[2]};
   int nhead{config.n_heads};
+
   xq = xq.reshape({b, t, nhead, c / nhead});
   xk = xk.reshape({b, t, nhead, c / nhead});
   // we can move heads to batch dim now for v, not using rope

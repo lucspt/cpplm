@@ -1,20 +1,24 @@
+#include <ATen/core/TensorBody.h>
 #include <gtest/gtest.h>
-#include <torch/torch.h>
+#include <torch/nn/modules/pixelshuffle.h>
 #include <modules.hpp>
-#include <iostream>
 #include <config.hpp>
 
 const ModelConfig model_config{};
 struct Config : public ModelConfig {
   int bsz{4};
-} config;
+};
+
+const Config config{};
 
 // #################################################################
 // RMSNormImpl
 class RMSNormImplTest : public testing::Test {
-protected:
+public:
   RMSNormImpl norm_layer;
   RMSNormImplTest() : norm_layer{RMSNormImpl(config.dim)} {};
+
+protected:
 };
 
 TEST_F(RMSNormImplTest, ShapeIsNotModified) {
@@ -31,17 +35,19 @@ TEST(RotaryPositionalEmbeddingsImpl, RaisesIfDimNotEven) {
   );
 }
 class RotaryPositionalEmbeddingsImplTest : public testing::Test {
-protected:
+public:
   const torch::Tensor inps;
   RotaryPositionalEmbeddingsImpl rope_layer;
+
+protected:
   RotaryPositionalEmbeddingsImplTest()
-    : rope_layer{RotaryPositionalEmbeddingsImpl(
+    : inps{torch::randn(
+        {config.bsz, config.context_len, config.n_heads, config.dim / config.n_heads}
+      )},
+      rope_layer{
         config.dim / config.n_heads,  // expects head dim, not dim
         config.context_len * 2
-      )},
-      inps{torch::randn(
-        {config.bsz, config.context_len, config.n_heads, config.dim / config.n_heads}
-      )} {};
+      } {};
 };
 
 TEST_F(RotaryPositionalEmbeddingsImplTest, ShapeIsNotModified) {
@@ -60,10 +66,11 @@ TEST_F(RotaryPositionalEmbeddingsImplTest, FirstRotationHasNoEffect) {
 // CausalSelfAttentionImpl
 
 class CausalSelfAttentionImplTest : public testing::Test {
-protected:
+public:
   torch::Tensor inps;
   CausalSelfAttentionImpl attn_layer;
 
+protected:
   CausalSelfAttentionImplTest()
     : inps{torch::randn({config.bsz, config.context_len, config.dim})},
       attn_layer{CausalSelfAttentionImpl{ModelConfig{}}} {};
@@ -77,10 +84,11 @@ TEST_F(CausalSelfAttentionImplTest, ShapeIsNotModified) {
 // DecoderLayer
 
 class DecoderLayerImplTest : public testing::Test {
-protected:
+public:
   DecoderLayerImpl d_layer;
   torch::Tensor inps;
 
+protected:
   DecoderLayerImplTest()
     : d_layer{DecoderLayerImpl{model_config}},
       inps{torch::rand({config.bsz, config.context_len, config.dim})} {}
