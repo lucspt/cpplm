@@ -4,7 +4,7 @@
   },
   "clangd.arguments": [
     "-compile-commands-dir=build/debug",
-    "--function-arg-placeholders=false"
+    "--function-arg-placeholders=false",
   ],
   "files.associations": {
     "stdexcept": "cpp",
