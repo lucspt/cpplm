@@ -43,12 +43,12 @@ function(target_compile_debug target)
 endfunction()
 
 ####################################################################
-# create tests from a list of sources. SOURCES should be a list of files, 
-# each file while map to an output executable of test test_${filestem}
+# create a test from the given `FILE`. FILE should be the test file to
+# create the executable from. SOURCES should be a list of files, 
+# to pass to `add_executable`. Each executable generated will be named test_${filestem}
 # for example, tests/example.cpp will turn into the executable test_example.
 # LIBRARIES should be the list of libraries to link with the test. 
-# `gtest`, `gmock` and `gtest_main` are all  included automatically. 
-# This list this can be empty.
+# `gtest`, `gmock` and `gtest_main` are all included automatically. 
 function(create_test_from_file)
   cmake_parse_arguments(
     Args
